@@ -86,6 +86,29 @@ chmod 644 "$CONFIG_FILE"
 
 echo "Config written to $CONFIG_FILE"
 
+# Write test PHP file to verify PHP-FPM works
+echo "<?php phpinfo(); ?>" > /var/www/ojs/test.php
+echo "Created /var/www/ojs/test.php for diagnostics"
+
+# Write diagnostic PHP file for OJS
+cat > /var/www/ojs/check.php << 'CHECKPHP'
+<?php
+echo "<h1>PHP is working!</h1>";
+echo "<p>Nginx + PHP-FPM connection OK</p>";
+echo "<p>Document root: " . $_SERVER['DOCUMENT_ROOT'] . "</p>";
+echo "<p>Script: " . $_SERVER['SCRIPT_FILENAME'] . "</p>";
+echo "<h3>OJS files check:</h3>";
+echo "<ul>";
+$files = ['index.php', 'config.inc.php', 'lib/pkp/includes/functions.inc.php'];
+foreach ($files as $f) {
+    $exists = file_exists('/var/www/ojs/' . $f);
+    echo "<li>" . $f . ": " . ($exists ? "✅" : "❌") . "</li>";
+}
+echo "</ul>";
+?>
+CHECKPHP
+echo "Created /var/www/ojs/check.php for diagnostics"
+
 # ---------------------------------------------------------------------------
 # Fix permissions
 # ---------------------------------------------------------------------------
@@ -94,9 +117,6 @@ chown -R www-data:www-data /var/www/ojs/cache
 chmod -R 775 /var/www/ojs/files
 chmod -R 775 /var/www/ojs/cache
 
-# ---------------------------------------------------------------------------
-# Start services via supervisor
-# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # Test configurations before starting services
 # ---------------------------------------------------------------------------
