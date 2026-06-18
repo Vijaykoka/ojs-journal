@@ -178,6 +178,14 @@ CHECKPHP
 echo "Created /var/www/ojs/check.php for diagnostics"
 
 # ---------------------------------------------------------------------------
+# Fix nginx listen port to match Render's PORT env var
+# ---------------------------------------------------------------------------
+NGINX_PORT="${PORT:-8080}"
+echo "Setting nginx listen port to $NGINX_PORT"
+sed -i "s/listen 8080/listen $NGINX_PORT/g" /etc/nginx/nginx.conf
+sed -i "s/listen \[::\]:8080/listen \[::\]:$NGINX_PORT/g" /etc/nginx/nginx.conf
+
+# ---------------------------------------------------------------------------
 # Fix permissions
 # ---------------------------------------------------------------------------
 chown -R www-data:www-data /var/www/ojs/files
