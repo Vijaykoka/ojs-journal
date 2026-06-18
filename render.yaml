@@ -1,0 +1,60 @@
+# =============================================================================
+# Render Blueprint — OJS Deployment
+# Deploy: https://render.com/deploy
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # OJS Web Application
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ojs-journal
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter  # $7/mo — 512MB RAM, 0.5 CPU
+    # Use "professional" plan for production — $12/mo, 1GB RAM
+
+    envVars:
+      - key: OJS_BASE_URL
+        value: https://ojs-journal.onrender.com
+        # Change this to your custom domain later
+
+      - key: DATABASE_DRIVER
+        value: pgsql
+
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: ojs-postgres
+          property: host
+
+      - key: DATABASE_PORT
+        value: "5432"
+
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: ojs-postgres
+          property: database
+
+      - key: DATABASE_USER
+        fromDatabase:
+          name: ojs-postgres
+          property: user
+
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: ojs-postgres
+          property: password
+
+      - key: OJS_ADMIN_EMAIL
+        value: editor@yourjournal.org
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+databases:
+  - name: ojs-postgres
+    plan: free  # 256MB RAM, 1GB storage — OK for testing
+    # Use "starter" for production — $7/mo, 1GB RAM, 10GB storage
+    databaseName: ojs_db
+    ipAllowList: []  # Allow all (secured by password auth)
