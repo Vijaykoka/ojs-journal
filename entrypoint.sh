@@ -93,51 +93,55 @@ echo "Created /var/www/ojs/test.php for diagnostics"
 # Write diagnostic PHP file for OJS
 cat > /var/www/ojs/check.php << 'CHECKPHP'
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 echo "<h1>PHP is working!</h1>";
 echo "<p>Nginx + PHP-FPM connection OK</p>";
 echo "<p>Document root: " . $_SERVER['DOCUMENT_ROOT'] . "</p>";
-echo "<h3>OJS files check:</h3>";
-echo "<ul>";
-$files = ['index.php', 'config.inc.php', 'lib/pkp/includes/functions.inc.php', 'lib/pkp/lib/vendor/autoload.php'];
-foreach ($files as $f) {
-    $exists = file_exists('/var/www/ojs/' . $f);
-    echo "<li>" . $f . ": " . ($exists ? "✅" : "❌") . "</li>";
-}
-echo "</ul>";
+
 echo "<h3>OJS Version:</h3><pre>";
 $verFile = '/var/www/ojs/lib/pkp/version.php';
-if (file_exists($verFile)) { echo file_get_contents($verVer); }
-echo "version.php exists: " . (file_exists($verFile) ? '✅' : '❌');
+if (file_exists($verFile)) { echo file_get_contents($verFile); }
+echo "version.php: " . (file_exists($verFile) ? '✅' : '❌');
 echo "</pre>";
-echo "<h3>Directory structure (lib/pkp/includes/):</h3><pre>";
-$dir = '/var/www/ojs/lib/pkp/includes';
-if (!is_dir($dir)) {
-    echo "⚠ 'includes' directory does not exist!\n";
-    echo "Listing lib/pkp/ instead:\n";
-    $items = scandir('/var/www/ojs/lib/pkp');
-    foreach ($items as $item) {
-        if ($item == '.' || $item == '..') continue;
-        $path = '/var/www/ojs/lib/pkp/' . $item;
-        echo "  " . (is_dir($path) ? "📁" : "📄") . " $item\n";
+
+echo "<h3>Testing index.php execution:</h3><pre>";
+try {
+    $_SERVER['REQUEST_METHOD'] = 'GET';
+    $_SERVER['REQUEST_URI'] = '/index.php';
+    ob_start();
+    $result = include '/var/www/ojs/index.php';
+    $output = ob_get_clean();
+    if ($result === false) {
+        echo "⚠ include returned false\n";
     }
-} else {
-    $items = scandir($dir);
-    foreach ($items as $item) {
-        if ($item == '.' || $item == '..') continue;
-        $path = $dir . '/' . $item;
-        echo "  " . (is_dir($path) ? "📁" : "📄") . " $item\n";
+    echo "Output length: " . strlen($output) . " bytes\n";
+    if (strlen($output) > 0) {
+        echo "First 2000 chars of output:\n";
+        echo substr($output, 0, 2000);
     }
+} catch (Throwable $e) {
+    echo "💥 ERROR: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n";
+    echo "Trace:\n" . $e->getTraceAsString();
 }
 echo "</pre>";
-echo "<h3>Does index.php reference functions.inc.php?</h3><pre>";
-$idx = file_get_contents('/var/www/ojs/index.php');
-if (preg_match('/functions\.inc\.php/', $idx)) {
-    echo "✅ index.php references functions.inc.php\n";
+
+echo "<h3>Checking class autoloader:</h3><pre>";
+$autoload = '/var/www/ojs/lib/pkp/lib/vendor/autoload.php';
+if (file_exists($autoload)) {
+    require_once $autoload;
+    echo "Autoloader loaded ✅\n";
+    echo "Classes available:\n";
+    $classes = get_declared_classes();
+    $pkpClasses = array_filter($classes, fn($c) => strpos($c, 'PKP') !== false || strpos($c, 'APP') !== false || strpos($c, 'OJS') !== false);
+    foreach ($pkpClasses as $c) echo "  - $c\n";
+    if (empty($pkpClasses)) echo "  (no PKP/APP/OJS classes found)\n";
 } else {
-    echo "⚠ index.php does NOT reference functions.inc.php\n";
+    echo "Autoloader NOT found ❌\n";
 }
-echo substr($idx, 0, 500);
-echo "\n...\n</pre>";
+echo "</pre>";
 ?>
 CHECKPHP
 echo "Created /var/www/ojs/check.php for diagnostics"
