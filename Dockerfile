@@ -72,16 +72,12 @@ RUN mkdir -p /var/www/ojs/files && \
     mkdir -p /var/www/ojs/public
 
 # ---------------------------------------------------------------------------
-# Configure Nginx
+# Configure Nginx (replace default config with OJS config)
 # ---------------------------------------------------------------------------
-RUN rm -f /etc/nginx/sites-enabled/default
+RUN rm -f /etc/nginx/sites-enabled/default && \
+    rm -f /etc/nginx/conf.d/default.conf
 
-COPY nginx.conf /etc/nginx/sites-available/ojs
-
-RUN ln -sf /etc/nginx/sites-available/ojs /etc/nginx/sites-enabled/ojs && \
-    rm -f /etc/nginx/sites-enabled/default && \
-    sed -i "s/user www-data;/user www-data;\nworker_processes auto;/" /etc/nginx/nginx.conf && \
-    sed -i "s/worker_connections 768;/worker_connections 1024;/" /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # ---------------------------------------------------------------------------
 # Configure Supervisor (runs both Nginx and PHP-FPM)

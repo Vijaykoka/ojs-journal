@@ -97,6 +97,19 @@ chmod -R 775 /var/www/ojs/cache
 # ---------------------------------------------------------------------------
 # Start services via supervisor
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Test configurations before starting services
+# ---------------------------------------------------------------------------
+echo ""
+echo "Testing Nginx configuration..."
+nginx -t 2>&1 || { echo "Nginx config test failed!"; cat /var/log/nginx/error.log 2>/dev/null; exit 1; }
+
+echo "Testing PHP-FPM configuration..."
+php-fpm8.1 --test 2>&1 || { echo "PHP-FPM config test failed!"; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Start services via supervisor
+# ---------------------------------------------------------------------------
 echo ""
 echo "Starting Nginx and PHP-FPM..."
 echo "========================================="
