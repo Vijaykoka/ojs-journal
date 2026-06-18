@@ -104,22 +104,40 @@ foreach ($files as $f) {
     echo "<li>" . $f . ": " . ($exists ? "✅" : "❌") . "</li>";
 }
 echo "</ul>";
-echo "<h3>Directory structure (lib/):</h3><pre>";
-function listDir($dir, $prefix = '') {
-    if (!is_dir($dir)) { echo "$prefix ⚠ Not a directory\n"; return; }
+echo "<h3>OJS Version:</h3><pre>";
+$verFile = '/var/www/ojs/lib/pkp/version.php';
+if (file_exists($verFile)) { echo file_get_contents($verVer); }
+echo "version.php exists: " . (file_exists($verFile) ? '✅' : '❌');
+echo "</pre>";
+echo "<h3>Directory structure (lib/pkp/includes/):</h3><pre>";
+$dir = '/var/www/ojs/lib/pkp/includes';
+if (!is_dir($dir)) {
+    echo "⚠ 'includes' directory does not exist!\n";
+    echo "Listing lib/pkp/ instead:\n";
+    $items = scandir('/var/www/ojs/lib/pkp');
+    foreach ($items as $item) {
+        if ($item == '.' || $item == '..') continue;
+        $path = '/var/www/ojs/lib/pkp/' . $item;
+        echo "  " . (is_dir($path) ? "📁" : "📄") . " $item\n";
+    }
+} else {
     $items = scandir($dir);
     foreach ($items as $item) {
         if ($item == '.' || $item == '..') continue;
         $path = $dir . '/' . $item;
-        if (is_dir($path)) {
-            echo "$prefix 📁 $item/\n";
-        } else {
-            echo "$prefix 📄 $item\n";
-        }
+        echo "  " . (is_dir($path) ? "📁" : "📄") . " $item\n";
     }
 }
-listDir('/var/www/ojs/lib');
 echo "</pre>";
+echo "<h3>Does index.php reference functions.inc.php?</h3><pre>";
+$idx = file_get_contents('/var/www/ojs/index.php');
+if (preg_match('/functions\.inc\.php/', $idx)) {
+    echo "✅ index.php references functions.inc.php\n";
+} else {
+    echo "⚠ index.php does NOT reference functions.inc.php\n";
+}
+echo substr($idx, 0, 500);
+echo "\n...\n</pre>";
 ?>
 CHECKPHP
 echo "Created /var/www/ojs/check.php for diagnostics"
