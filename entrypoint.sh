@@ -96,15 +96,30 @@ cat > /var/www/ojs/check.php << 'CHECKPHP'
 echo "<h1>PHP is working!</h1>";
 echo "<p>Nginx + PHP-FPM connection OK</p>";
 echo "<p>Document root: " . $_SERVER['DOCUMENT_ROOT'] . "</p>";
-echo "<p>Script: " . $_SERVER['SCRIPT_FILENAME'] . "</p>";
 echo "<h3>OJS files check:</h3>";
 echo "<ul>";
-$files = ['index.php', 'config.inc.php', 'lib/pkp/includes/functions.inc.php'];
+$files = ['index.php', 'config.inc.php', 'lib/pkp/includes/functions.inc.php', 'lib/pkp/lib/vendor/autoload.php'];
 foreach ($files as $f) {
     $exists = file_exists('/var/www/ojs/' . $f);
     echo "<li>" . $f . ": " . ($exists ? "✅" : "❌") . "</li>";
 }
 echo "</ul>";
+echo "<h3>Directory structure (lib/):</h3><pre>";
+function listDir($dir, $prefix = '') {
+    if (!is_dir($dir)) { echo "$prefix ⚠ Not a directory\n"; return; }
+    $items = scandir($dir);
+    foreach ($items as $item) {
+        if ($item == '.' || $item == '..') continue;
+        $path = $dir . '/' . $item;
+        if (is_dir($path)) {
+            echo "$prefix 📁 $item/\n";
+        } else {
+            echo "$prefix 📄 $item\n";
+        }
+    }
+}
+listDir('/var/www/ojs/lib');
+echo "</pre>";
 ?>
 CHECKPHP
 echo "Created /var/www/ojs/check.php for diagnostics"
