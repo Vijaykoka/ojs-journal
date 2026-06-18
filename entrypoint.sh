@@ -77,6 +77,11 @@ dir = /var/www/ojs/files
 [oai]
 repository_id = ojs
 
+[email]
+default = log
+; Use 'log' for testing (logs to file, doesn't send)
+; Change to 'mail' or 'smtp' for production
+
 [search]
 min_word_length = 3
 CONFIGEOF
